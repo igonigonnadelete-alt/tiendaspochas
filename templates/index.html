@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>tiendas - tiendaspochas</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&family=Oswald:wght@200..700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="https://www.youtube.com/watch?v=5VX4ZXFZ8_8">
+        <img src="{{ url_for('static', filename='logo.png') }}" style="width:40px;">
+      </a>
+    </div>
+
+    <div class="topbar-center">
+      <a href="/"><h1>tiendaspochas</h1></a>
+    </div>
+
+    <div class="topbar-right">
+      <div class="user-menu">
+        {% if session.get("user_id") %}
+          <button class="user-btn">
+            {{ session["username"] }} ▾
+          </button>
+          <div class="dropdown">
+            <a href="/logout">cerrar sesión</a>
+          </div>
+        {% else %}
+          <button class="user-btn">
+            entrar ▾
+          </button>
+          <div class="dropdown">
+            <a href="/login">iniciar sesión</a>
+            <a href="/register">registrarse</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Page layout -->
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="current"><a href="/"><img src="{{ url_for('static', filename='homebtn.png') }}" style="width: 30px;"> <span>tiendas</span></a></div>
+      <div><a href="/create"><img src="{{ url_for('static', filename='addbtn.png') }}" style="width: 30px;"> <span>crear</span></a></div>
+      <div class="spacing"></div>
+      {% if session.get("user_id") and session.get("is_admin") %}<div><a href="/admin"><img src="{{ url_for('static', filename='adminbtn.png') }}" style="width: 30px;"> <span>admin</span></a></div>{% else %}<div><a onclick="playClick()"><img src="{{ url_for('static', filename='ahhbtn.png') }}" style="width: 30px;"> <span>ahh</span></a></div>{% endif %}
+    </div>
+
+    <!-- Main content -->
+    <div class="content">
+      <h1>tiendas</h1>
+      {% for shop in shops %}
+      <div class="shop">
+        <img src="{{ url_for('static', filename='uploads/' + shop['image']) }}">
+        <div class="shop-txt">
+          <h2>{{ shop['title'] }}</h2>
+          <h4>{{ shop['username'] }}</h4>
+        </div>  
+        <h3 class="coords">X: {{ shop['x'] }} Y: {{ shop['y'] }}</h3>
+      </div>
+      {% else %}
+      <a href="/create" class="hidden"><h1 class="fill">no hay tiendas :c</h1></a>
+      {% endfor %}
+    </div>
+
+  </div>
+
+<audio id="ahh-sound" src="{{ url_for('static', filename='sounds/ahh.mp3') }}"></audio>
+<script>
+  const clickSound = document.getElementById("ahh-sound");
+
+  function playClick() {
+    clickSound.currentTime = 0; // rewind
+    clickSound.play();
+  }
+</script>
+<script>
+  setTimeout(() => {
+  document.querySelectorAll(".flash").forEach(el => {
+    el.classList.add("hide");
+    setTimeout(() => el.remove(), 500);
+  });
+}, 4000);
+</script>
+</body>
+</html>

@@ -4,6 +4,8 @@ from functools import wraps
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
+import cloudinary
+import cloudinary.uploader
 
 def login_required(f):
     @wraps(f)
@@ -37,11 +39,12 @@ def admin_required(f):
 
 app = Flask(__name__)
 app.secret_key = "69736861746F6E6D79646F6F7273746570"
-UPLOAD_FOLDER = "static/uploads"
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET')
+)
 
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:root@localhost/postgres')
 
@@ -74,14 +77,14 @@ def create_shop():
             y = request.form["y"]
             image = request.files["image"]
 
-            image_path = os.path.join(app.config["UPLOAD_FOLDER"], image.filename)
-            image.save(image_path)
+            result = cloudinary.uploader.upload(image)
+            image_url = result["secure_url"]
 
             db = get_db()
             cursor = get_cursor(db)
             cursor.execute(
                 "INSERT INTO shops (title, username, x, y, image, checked, shown) VALUES (%s, %s, %s, %s, %s, 0, 1)",
-                (title, username, x, y, image.filename)
+                (title, username, x, y, image_url)
             )
             db.commit()
             db.close()

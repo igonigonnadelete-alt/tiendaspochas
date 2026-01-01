@@ -77,7 +77,7 @@
       <h1>tiendas</h1>
       {% for shop in shops %}
       <div class="shop">
-        <img src="{{ url_for('static', filename='uploads/' + shop['image']) }}">
+        <img src="{{ shop['image'] }}">
         <div class="shop-txt">
           <h2>{{ shop['title'] }}</h2>
           <h4>{{ shop['username'] }}</h4>

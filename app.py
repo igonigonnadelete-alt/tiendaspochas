@@ -64,25 +64,30 @@ def index():
 @login_required
 def create_shop():
     if request.method == "POST":
-        title = request.form["title"]
-        username = request.form["username"]
-        x = request.form["x"]
-        y = request.form["y"]
-        image = request.files["image"]
+        try:
+            title = request.form["title"]
+            username = request.form["username"]
+            x = request.form["x"]
+            y = request.form["y"]
+            image = request.files["image"]
 
-        image_path = os.path.join(app.config["UPLOAD_FOLDER"], image.filename)
-        image.save(image_path)
+            image_path = os.path.join(app.config["UPLOAD_FOLDER"], image.filename)
+            image.save(image_path)
 
-        db = get_db()
-        cursor = get_cursor(db)
-        cursor.execute(
-            "INSERT INTO shops (title, username, x, y, image, checked, shown) VALUES (%s, %s, %s, %s, %s, 0, 1)",
-            (title, username, x, y, image.filename)
-        )
-        db.commit()
-        db.close()
-        flash("tienda creada con exito!!!","info")
-        return redirect("/")
+            db = get_db()
+            cursor = get_cursor(db)
+            cursor.execute(
+                "INSERT INTO shops (title, username, x, y, image, checked, shown) VALUES (%s, %s, %s, %s, %s, 0, 1)",
+                (title, username, x, y, image.filename)
+            )
+            db.commit()
+            db.close()
+            flash("tienda creada con exito!!!","info")
+            return redirect("/")
+        except Exception as e:
+            print(f"Error creating shop: {e}")
+            flash("Error creating shop","error")
+            return redirect("/create")
     return render_template("create_shop.html")
 
 @app.route("/admin", methods=["GET", "POST"])

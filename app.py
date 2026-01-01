@@ -162,7 +162,7 @@ def register():
             )
             db.commit()
             flash("yay, estas registrado!!!!","success")
-        except sqlite3.IntegrityError:
+        except psycopg2.errors.IntegrityError:
             flash("usuario ya existe :c","error")
         
         return redirect("/login")

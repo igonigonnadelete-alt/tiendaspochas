@@ -20,10 +20,13 @@ def admin_required(f):
             return redirect("/login")
 
         db = get_db()
-        user = db.execute(
-            "SELECT is_admin FROM users WHERE id = ?",
+        cursor = get_cursor(db)
+        cursor.execute(
+            "SELECT is_admin FROM users WHERE id = %s",
             (session["user_id"],)
-        ).fetchone()
+        )
+        user = cursor.fetchone()
+        db.close()
 
         if not user or user["is_admin"] != 1:
             return "Access denied", 403
@@ -41,15 +44,20 @@ DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:root@localh
 
 def get_db():
     conn = psycopg2.connect(DATABASE_URL)
-    conn.row_factory = RealDictCursor
     return conn
+
+def get_cursor(conn):
+    return conn.cursor(cursor_factory=RealDictCursor)
 
 @app.route("/")
 def index():
     db = get_db()
-    shops = db.execute(
+    cursor = get_cursor(db)
+    cursor.execute(
         "SELECT * FROM shops WHERE checked = 1 AND shown = 1"
-    ).fetchall()
+    )
+    shops = cursor.fetchall()
+    db.close()
     return render_template("index.html", shops=shops)
 
 @app.route("/create", methods=["GET", "POST"])
@@ -66,11 +74,13 @@ def create_shop():
         image.save(image_path)
 
         db = get_db()
-        db.execute(
-            "INSERT INTO shops (title, username, x, y, image, checked, shown) VALUES (?, ?, ?, ?, ?, 0, 1)",
+        cursor = get_cursor(db)
+        cursor.execute(
+            "INSERT INTO shops (title, username, x, y, image, checked, shown) VALUES (%s, %s, %s, %s, %s, 0, 1)",
             (title, username, x, y, image.filename)
         )
         db.commit()
+        db.close()
         flash("tienda creada con exito!!!","info")
         return redirect("/")
     return render_template("create_shop.html")
@@ -79,28 +89,31 @@ def create_shop():
 @admin_required
 def admin():
     db = get_db()
+    cursor = get_cursor(db)
 
     if request.method == "POST":
         shop_id = request.form["shop_id"]
         action = request.form["action"]
 
         if action == "approve":
-            db.execute(
-                "UPDATE shops SET checked = 1 WHERE id = ?",
+            cursor.execute(
+                "UPDATE shops SET checked = 1 WHERE id = %s",
                 (shop_id,)
             )
             flash("tienda aprobada con exito!!!","info")
         elif action == "reject":
-            db.execute(
-                "UPDATE shops SET checked = 1, shown = 0 WHERE id = ?",
+            cursor.execute(
+                "UPDATE shops SET checked = 1, shown = 0 WHERE id = %s",
                 (shop_id,)
             )
             flash("tienda rechazada","info")
         db.commit()
 
-    shops = db.execute(
+    cursor.execute(
         "SELECT * FROM shops WHERE checked = 0"
-    ).fetchall()
+    )
+    shops = cursor.fetchall()
+    db.close()
 
     return render_template("admin.html", shops=shops)
 
@@ -108,20 +121,23 @@ def admin():
 @admin_required
 def admin_rejected():
     db = get_db()
+    cursor = get_cursor(db)
 
     if request.method == "POST":
         shop_id = request.form["shop_id"]
 
-        db.execute(
-            "UPDATE shops SET shown = 1 WHERE id = ?",
+        cursor.execute(
+            "UPDATE shops SET shown = 1 WHERE id = %s",
             (shop_id,)
         )
         db.commit()
         flash("tienda reaprobada con exito!!!","info")
 
-    shops = db.execute(
+    cursor.execute(
         "SELECT * FROM shops WHERE checked = 1 AND shown = 0"
-    ).fetchall()
+    )
+    shops = cursor.fetchall()
+    db.close()
 
     return render_template("rejected.html", shops=shops)
 
@@ -129,20 +145,23 @@ def admin_rejected():
 @admin_required
 def admin_approved():
     db = get_db()
+    cursor = get_cursor(db)
 
     if request.method == "POST":
         shop_id = request.form["shop_id"]
 
-        db.execute(
-            "UPDATE shops SET shown = 0 WHERE id = ?",
+        cursor.execute(
+            "UPDATE shops SET shown = 0 WHERE id = %s",
             (shop_id,)
         )
         db.commit()
         flash("tienda desaprobada :c","info")
 
-    shops = db.execute(
+    cursor.execute(
         "SELECT * FROM shops WHERE shown = 1 AND checked = 1"
-    ).fetchall()
+    )
+    shops = cursor.fetchall()
+    db.close()
 
     return render_template("approved.html", shops=shops)
 
@@ -155,15 +174,19 @@ def register():
         password_hash = generate_password_hash(password)
 
         db = get_db()
+        cursor = get_cursor(db)
         try:
-            db.execute(
-                "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+            cursor.execute(
+                "INSERT INTO users (username, password_hash) VALUES (%s, %s)",
                 (username, password_hash)
             )
             db.commit()
             flash("yay, estas registrado!!!!","success")
         except psycopg2.errors.IntegrityError:
+            db.rollback()
             flash("usuario ya existe :c","error")
+        finally:
+            db.close()
         
         return redirect("/login")
     
@@ -176,10 +199,13 @@ def login():
         password = request.form["password"]
 
         db = get_db()
-        user = db.execute(
-            "SELECT * FROM users WHERE username = ?",
+        cursor = get_cursor(db)
+        cursor.execute(
+            "SELECT * FROM users WHERE username = %s",
             (username,)
-        ).fetchone()
+        )
+        user = cursor.fetchone()
+        db.close()
 
         if user and check_password_hash(user["password_hash"], password):
             session["user_id"] = user["id"]

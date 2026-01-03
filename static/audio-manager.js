@@ -281,6 +281,8 @@ class AudioManager {
     if (this.isMuted) {
       this.currentGainNode.gain.value = 0;
       this.visualizerActive = false;
+      const contentDiv = document.querySelector('.content');
+      if(contentDiv){contentDiv.style.backgroundColor = "hsl(180deg, 100%, 9.41%)"}
     } else {
       this.currentGainNode.gain.value = 0.5;
       if (this.isPlaying) {
@@ -432,6 +434,7 @@ class AudioManager {
       }
     });
   }
+
 }
 
 const audioManager = new AudioManager();

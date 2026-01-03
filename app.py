@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for, flash
+from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import psycopg2
@@ -6,7 +6,9 @@ from psycopg2.extras import RealDictCursor
 import os
 import cloudinary
 import cloudinary.uploader
+from dotenv import load_dotenv
 
+load_dotenv()
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -59,12 +61,77 @@ def get_cursor(conn):
 def index():
     db = get_db()
     cursor = get_cursor(db)
-    cursor.execute(
-        "SELECT * FROM shops WHERE checked = 1 AND shown = 1"
-    )
+    user_id = session.get("user_id")
+    
+    cursor.execute("""
+        SELECT s.*, COALESCE(SUM(v.vote_value), 0) as vote_count
+        FROM shops s
+        LEFT JOIN votes v ON s.id = v.shop_id
+        WHERE s.checked = 1 AND s.shown = 1
+        GROUP BY s.id
+        ORDER BY vote_count DESC
+    """)
     shops = cursor.fetchall()
+    
+    user_votes = {}
+    if user_id:
+        cursor.execute(
+            "SELECT shop_id, vote_value FROM votes WHERE user_id = %s",
+            (user_id,)
+        )
+        for row in cursor.fetchall():
+            user_votes[row["shop_id"]] = row["vote_value"]
+    
+    for shop in shops:
+        shop["user_vote"] = user_votes.get(shop["id"], 0)
+    
     db.close()
     return render_template("index.html", shops=shops)
+
+@app.route("/vote/<int:shop_id>/<vote_type>", methods=["POST"])
+@login_required
+def vote(shop_id, vote_type):
+    if vote_type not in ["up", "down"]:
+        return jsonify({"error": "Invalid vote type"}), 400
+    
+    vote_value = 1 if vote_type == "up" else -1
+    user_id = session["user_id"]
+    
+    db = get_db()
+    cursor = get_cursor(db)
+    
+    try:
+        cursor.execute(
+            """
+            INSERT INTO votes (user_id, shop_id, vote_value)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (user_id, shop_id)
+            DO UPDATE SET vote_value = %s
+            """,
+            (user_id, shop_id, vote_value, vote_value)
+        )
+        db.commit()
+        
+        cursor.execute(
+            "SELECT COALESCE(SUM(vote_value), 0) as vote_count FROM votes WHERE shop_id = %s",
+            (shop_id,)
+        )
+        result = cursor.fetchone()
+        vote_count = result["vote_count"] if result else 0
+        
+        cursor.execute(
+            "SELECT vote_value FROM votes WHERE user_id = %s AND shop_id = %s",
+            (user_id, shop_id)
+        )
+        user_vote_result = cursor.fetchone()
+        user_vote = user_vote_result["vote_value"] if user_vote_result else 0
+        db.close()
+        
+        return jsonify({"vote_count": vote_count, "user_vote": user_vote}), 200
+    except Exception as e:
+        db.close()
+        print(f"Error voting: {e}")
+        return jsonify({"error": "Error voting"}), 500
 
 @app.route("/create", methods=["GET", "POST"])
 @login_required

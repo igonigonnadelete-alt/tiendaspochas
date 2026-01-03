@@ -5,3 +5,7 @@ __pycache__/
 *.pyc
 .env
 .DS_Store
+adminscripts/
+-p/
+.pytest_cache/
+tests/

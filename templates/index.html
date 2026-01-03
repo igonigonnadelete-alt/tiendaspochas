@@ -69,7 +69,8 @@
       <div class="current"><a href="/"><img src="{{ url_for('static', filename='homebtn.png') }}" style="width: 30px;"> <span>tiendas</span></a></div>
       <div><a href="/create"><img src="{{ url_for('static', filename='addbtn.png') }}" style="width: 30px;"> <span>crear</span></a></div>
       <div class="spacing"></div>
-      {% if session.get("user_id") and session.get("is_admin") %}<div><a href="/admin"><img src="{{ url_for('static', filename='adminbtn.png') }}" style="width: 30px;"> <span>admin</span></a></div>{% else %}<div><a onclick="playClick()"><img src="{{ url_for('static', filename='ahhbtn.png') }}" style="width: 30px;"> <span>ahh</span></a></div>{% endif %}
+      <div><button id="mute-btn" style="display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: none; padding: 10px; cursor: pointer; white-space: nowrap;" title="Mute/Unmute"><img src="{{ url_for('static', filename='mutebtn.png') }}" style="width: 30px;" alt="Mute button"> <span>silenciar</span></button></div>
+      {% if session.get("user_id") and session.get("is_admin") %}<div><a href="/admin"><img src="{{ url_for('static', filename='adminbtn.png') }}" style="width: 30px;"> <span>admin</span></a></div>{% else %}<div><a id="ahh-btn" onclick="playClick()"><img src="{{ url_for('static', filename='ahhbtn.png') }}" style="width: 30px;" alt="Ahh button"> <span>ahh</span></a></div>{% endif %}
     </div>
 
     <!-- Main content -->
@@ -83,6 +84,17 @@
           <h4>{{ shop['username'] }}</h4>
         </div>  
         <h3 class="coords">X: {{ shop['x'] }} Y: {{ shop['y'] }}</h3>
+        <div class="shop-votes">
+          <div class="votebtns" data-user-vote="{{ shop['user_vote'] }}">
+          {% if session.get("user_id") %}
+            <button class="vote-btn plus" data-shop-id="{{ shop['id'] }}" data-vote-type="up"><img src="{{ url_for('static', filename='plus.png') }}" style="height: 20px; width: auto;"></button>
+            <button class="vote-btn minus" data-shop-id="{{ shop['id'] }}" data-vote-type="down"><img src="{{ url_for('static', filename='minus.png') }}" style="height: 20px; width: auto;"></button>
+          {% else %}
+            <a href="/login">inicia sesión para votar</a>
+          {% endif %}
+          </div>
+          {% if shop['vote_count'] == 0 %}<span class="vote-count">{{ shop['vote_count'] }}</span>{% endif %}{% if shop['vote_count'] >= 1 %}<span class="vote-count positive">{{ shop['vote_count'] }}</span>{% endif %}{% if -1 >= shop['vote_count'] %}<span class="vote-count negative">{{ shop['vote_count'] }}</span>{% endif %}
+        </div>
       </div>
       {% else %}
       <a href="/create" class="hidden"><h1 class="fill">no hay tiendas :c</h1></a>
@@ -107,6 +119,63 @@
     setTimeout(() => el.remove(), 500);
   });
 }, 4000);
+</script>
+<script>
+  document.querySelectorAll('.vote-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const shopId = btn.dataset.shopId;
+      const voteType = btn.dataset.voteType;
+      const voteBtnsContainer = btn.closest('.votebtns');
+      const voteCountSpan = btn.closest('.shop').querySelector('.vote-count');
+      
+      if (!voteCountSpan || !voteBtnsContainer) return;
+      
+      const currentCount = parseInt(voteCountSpan.textContent);
+      const previousUserVote = parseInt(voteBtnsContainer.dataset.userVote);
+      const newUserVote = voteType === 'up' ? 1 : -1;
+      const voteDifference = newUserVote - previousUserVote;
+      const optimisticCount = currentCount + voteDifference;
+      
+      voteCountSpan.textContent = optimisticCount;
+      voteCountSpan.className = 'vote-count';
+      if (optimisticCount > 0) {
+        voteCountSpan.classList.add('positive');
+      } else if (optimisticCount < 0) {
+        voteCountSpan.classList.add('negative');
+      }
+      
+      try {
+        const response = await fetch(`/vote/${shopId}/${voteType}`, { method: 'POST' });
+        if (response.ok) {
+          const data = await response.json();
+          voteBtnsContainer.dataset.userVote = data.user_vote;
+          voteCountSpan.textContent = data.vote_count;
+          voteCountSpan.className = 'vote-count';
+          if (data.vote_count > 0) {
+            voteCountSpan.classList.add('positive');
+          } else if (data.vote_count < 0) {
+            voteCountSpan.classList.add('negative');
+          }
+        }
+      } catch (err) {
+        console.error('Vote failed:', err);
+        voteCountSpan.textContent = currentCount;
+        voteCountSpan.className = 'vote-count';
+        if (currentCount > 0) {
+          voteCountSpan.classList.add('positive');
+        } else if (currentCount < 0) {
+          voteCountSpan.classList.add('negative');
+        }
+      }
+    });
+  });
+</script>
+<script src="{{ url_for('static', filename='audio-manager.js') }}"></script>
+<script>
+  document.getElementById('mute-btn').addEventListener('click', () => {
+    audioManager.toggleMute();
+  });
 </script>
 </body>
 </html>

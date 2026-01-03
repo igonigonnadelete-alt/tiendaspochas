@@ -61,6 +61,7 @@
       <div><a href="/"><img src="{{ url_for('static', filename='homebtn.png') }}" style="width: 30px;"> <span>tiendas</span></a></div>
       <div><a href="/create"><img src="{{ url_for('static', filename='addbtn.png') }}" style="width: 30px;"> <span>crear</span></a></div>
       <div class="spacing"></div>
+      <div><button id="mute-btn" style="display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: none; padding: 10px; cursor: pointer; white-space: nowrap;" title="Mute/Unmute"><img src="{{ url_for('static', filename='mutebtn.png') }}" style="width: 30px;" alt="Mute button"> <span>silenciar</span></button></div>
       {% if session.get("user_id") and session.get("is_admin") %}<div class="current"><a href="/admin"><img src="{{ url_for('static', filename='adminbtn.png') }}" style="width: 30px;"> <span>admin</span></a></div>{% else %}<div class="current"><a onclick="playClick()"><img src="{{ url_for('static', filename='ahhbtn.png') }}" style="width: 30px;"> <span>ahh</span></a></div>{% endif %}
     </div>
     <div class="content">
@@ -104,6 +105,12 @@
     setTimeout(() => el.remove(), 500);
   });
 }, 4000);
+</script>
+<script src="{{ url_for('static', filename='audio-manager.js') }}"></script>
+<script>
+  document.getElementById('mute-btn').addEventListener('click', () => {
+    audioManager.toggleMute();
+  });
 </script>
 </body>
 </html>

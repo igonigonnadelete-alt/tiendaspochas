@@ -4,6 +4,27 @@
   box-sizing: border-box;
 }
 
+span {
+  font-family: "Funnel Display", sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+button {
+  background: #009040;
+  border: 2px solid rgb(190, 190, 190);
+  color: rgb(230, 230, 230);
+  cursor: pointer;
+  border-radius: 5px;
+  font-family: "Funnel Display", sans-serif;
+}
+
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+}
+
 body {
   font-family: "Funnel Display", sans-serif;
   background: #003030;
@@ -140,10 +161,11 @@ a {
   width: 50px;
   overflow: hidden;
   transition: width 0.3s ease, max-width 0.3s ease;
+  background-color: #006060;
 }
 
-.sidebar > div:hover {
-  width: 115px;
+.sidebar > div:hover:not(.spacing) {
+  width: 125px;
   max-width: fit-content;
 }
 
@@ -153,6 +175,15 @@ a {
 }
 
 .sidebar > div:hover span {
+  opacity: 1;
+}
+
+.sidebar button span {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar > div:hover button span {
   opacity: 1;
 }
 
@@ -169,12 +200,30 @@ a {
   transition: background-color 0.3s ease;
 }
 
-.sidebar a:hover {
+.sidebar button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: 0px;
+  border: none;
+  background-color: #006060;
+  padding: 10px;
+  white-space: nowrap;
+  transition: background-color 0.3s ease;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  font-size: 16px;
+}
+
+.sidebar a:hover, .sidebar div:hover:not(.spacing):hover {
   background-color: #008080;
 }
 
 .sidebar .spacing {
-  height: calc(100vh - 200px);
+  height: calc(100vh - 250px);
 }
 
 .sidebar .current a {
@@ -197,6 +246,8 @@ a {
   text-align: left;
   color: rgb(210, 210, 210);
   font-size: 40px;
+  -webkit-text-stroke: 10px #003030;
+  paint-order: stroke;
 }
 
 .content .preview {
@@ -231,6 +282,7 @@ a {
   margin: 20px 0;
   border-radius: 10px;
   border: 2px solid rgb(190, 190, 190);
+  position: relative;
 }
 
 .shop img {
@@ -250,7 +302,7 @@ a {
 }
 
 .coords {
-  align-self: end;
+  grid-row: -2/3;
   margin: 0;
 }
 
@@ -303,20 +355,12 @@ form input[type="file"]::file-selector-button:hover {
   background: #008080;
 }
 
-
-input, button {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-}
-
-button {
-  background: #009040;
-  border: 2px solid rgb(190, 190, 190);
-  color: rgb(230, 230, 230);
-  cursor: pointer;
-  border-radius: 5px;
-  font-family: "Funnel Display", sans-serif;
+.invisible {
+  background: none;
+  border: none;
+  padding: 0;
+  width: fit-content;
+  height: fit-content;
 }
 
 .red {
@@ -432,4 +476,100 @@ button:hover {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.shop-votes {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+.votebtns {
+  display: flex;
+  gap: 5px;
+}
+
+.vote-btn {
+  width: auto;
+  padding: 8px 12px;
+  margin: 0;
+  background: #006060;
+  border: 2px solid rgb(190, 190, 190);
+  color: rgb(190, 190, 190);
+  font-size: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.vote-btn:hover {
+  background: #008080;
+}
+
+.vote-count {
+  color: rgb(150, 150, 150);
+  font-size: 14px;
+  white-space: nowrap;
+  transition: color 1s ease;
+}
+
+.plus {
+  background: #006030;
+  border: 2px solid #20b060;
+  color: #20b060;
+}
+
+.plus:hover {
+  background: #008040;
+}
+
+.minus {
+  background: #603030;
+  border: 2px solid #b03030;
+  color: #b03030;
+}
+
+.minus:hover {
+  background: #804040;
+}
+
+.positive {
+  color: #20b060;
+}
+
+.negative {
+  color: #b03030;
+}
+
+#mute-btn {
+  color: rgb(190, 190, 190);
+  transition: background-color 0.3s ease, opacity 0.2s ease;
+  opacity: 1;
+}
+
+#mute-btn:hover {
+  background-color: #008080;
+}
+
+#mute-btn.muted {
+  opacity: 0.4;
+}
+
+#ahh-btn {
+  color: rgb(190, 190, 190);
+  transition: background-color 0.3s ease, opacity 0.2s ease;
+  opacity: 1;
+}
+
+#ahh-btn:hover {
+  background-color: #008080;
+}
+
+#ahh-btn.muted {
+  opacity: 0.4;
 }
